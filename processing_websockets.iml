@@ -9,5 +9,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="library" level="project" />
     <orderEntry type="library" name="processing core" level="application" />
+    <orderEntry type="library" name="webSockets" level="project" />
+    <orderEntry type="library" name="javax.servlet-api-3.1.0" level="project" />
+    <orderEntry type="library" name="core" level="project" />
   </component>
 </module>

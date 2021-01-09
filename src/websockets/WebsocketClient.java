@@ -18,6 +18,7 @@ public class WebsocketClient {
 	private Method webSocketEvent;
 	private Method webSocketEventBinary;
 	private WebsocketClientEvents socket;
+	private Method webSocketOnError;
 
 	/**
 	 *
@@ -26,8 +27,8 @@ public class WebsocketClient {
 	 * @param parent Processing's PApplet object
 	 * @param endpointURI The URI to connect to Ex. ws://localhost:8025/john
 	 */
-	public WebsocketClient(PApplet parent, String endpointURI) {
-		this(parent, parent, endpointURI);
+	public WebsocketClient(PApplet parent, String endpointURI, boolean wait) {
+		this(parent, parent, endpointURI, wait);
 	}
 
 	/**
@@ -39,16 +40,29 @@ public class WebsocketClient {
 	 * @param callbacks The object implementing .webSocketEvent()
 	 * @param endpointURI The URI to connect to Ex. ws://localhost:8025/john
 	 */
-	public WebsocketClient(PApplet parent, Object callbacks,
-						   String endpointURI) {
+	public WebsocketClient(PApplet parent, Object callbacks, String endpointURI, boolean wait) {
 		parent.registerMethod("dispose", this);
 
+//		try {
+//			webSocketEvent = callbacks.getClass().getMethod("webSocketEvent",
+//					String.class);
+//			webSocketOnError = callbacks.getClass().getMethod("webSocketOnError", Throwable.class);
+//			webSocketEventBinary = callbacks.getClass().getMethod("webSocketEvent", byte[].class, int.class, int.class);
+//		} catch (Exception e) {
+//			// no such method, or an error.. which is fine, just ignore
+//		}
+
 		try {
-			webSocketEvent = callbacks.getClass().getMethod("webSocketEvent",
-					String.class);
-			webSocketEventBinary = callbacks.getClass().getMethod("webSocketEvent", byte[].class, int.class, int.class);
+			webSocketEvent = callbacks.getClass().getMethod("webSocketEvent", String.class);
+			webSocketOnError = callbacks.getClass().getMethod("webSocketOnError", Throwable.class);
 		} catch (Exception e) {
-			// no such method, or an error.. which is fine, just ignore
+			e.printStackTrace();
+		}
+
+		try {
+			webSocketEventBinary = callbacks.getClass().getMethod("webSocketEvent", byte[].class, int.class, int.class);
+		} catch (Exception e){
+			// This Method is optional. Ignore if it doesn't exist.
 		}
 
 		WebSocketClient client = null;
@@ -62,15 +76,16 @@ public class WebsocketClient {
 
 		try {
 			socket = new WebsocketClientEvents(callbacks, webSocketEvent,
-					webSocketEventBinary);
+					webSocketEventBinary, webSocketOnError);
 			client.start();
 			URI echoUri = new URI(endpointURI);
 			ClientUpgradeRequest request = new ClientUpgradeRequest();
 			client.connect(socket, echoUri, request);
-			socket.getLatch().await();
+			if(wait) socket.getLatch().await();
 
 		} catch (Throwable t) {
 			t.printStackTrace();
+//			socket = new WebsocketClientEvents()
 		}
 	}
 
